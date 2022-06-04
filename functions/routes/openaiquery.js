@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const admin = require("firebase-admin");
 const { Configuration, OpenAIApi } = require("openai");
 const configuration = new Configuration({
   apiKey: "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",
@@ -59,25 +60,22 @@ const openai = new OpenAIApi(configuration);
 //openai query
 router.post("/", async (req, res) => {
   let ParsedBody = req.body.query;
-  //sends prompt to GPT-3 API and returns the response
   let OpenAiResponse = await OpenAiQuery(ParsedBody);
-  //using openai to determine if prompt has heretical content, if so refuses request
   let isNotHeretical = await contentFilter(ParsedBody);
 
-  //Should hopefully speed up program since this is a lengthy call, despite the fact this
-  //doesnt look like something that should be laid out this way as idealy calling the proper
-  //API should come after calling the content filter I am going to do it this way anyway as performance
-  //is terrible right now
   Promise.all([OpenAiResponse, isNotHeretical]).then(function (values) {
     OpenAiResponse = values[0];
     isNotHeretical = values[1];
   });
 
-  console.log(
-    "boolean values of the checks below, Authorization and isNotHeretical in that order"
-  );
-
-  console.log(isNotHeretical);
+  //increment tokens used
+  admin
+    .firestore()
+    .collection("users")
+    .doc(req.user.uid)
+    .update({
+      tokensUsed: admin.firestore.FieldValue.increment(1),
+    });
 
   res.send(OpenAiResponse);
 });
