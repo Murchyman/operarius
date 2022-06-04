@@ -32,3 +32,15 @@ app.get("/", (req, res) => {
 });
 
 exports.api = functions.https.onRequest(app);
+
+//create a new firestore document when a new user is created
+exports.createUser = functions.auth.user().onCreate((user) => {
+  return admin.firestore().collection("users").doc(user.uid).set({
+    email: user.email,
+    displayName: null,
+    photoURL: null,
+    subscriptionActive: false,
+    tokensUsed: 0,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+});
