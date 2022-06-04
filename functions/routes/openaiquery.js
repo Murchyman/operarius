@@ -76,8 +76,9 @@ router.post("/", async (req, res) => {
     .update({
       tokensUsed: admin.firestore.FieldValue.increment(1),
     });
-
-  res.send(OpenAiResponse);
+  //sanitize response
+  let sanitizedResponse = OpenAiResponse.body.replace(/\n/g, " ");
+  res.send(sanitizedResponse);
 });
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const express = require("express");
+const cors = require("cors");
 
 const adminApp = require("firebase-admin");
 admin.initializeApp();
@@ -8,7 +9,8 @@ admin.initializeApp();
 const app = express();
 const openAiQuery = require("./routes/openaiquery");
 
-//auth middleware, unauthenticated users will be 403 forbidden uses firebase auth token
+app.use(cors({ origin: true }));
+app.use(express.json());
 app.use((req, res, next) => {
   const token = req.body.authToken;
   if (token) {
@@ -20,7 +22,7 @@ app.use((req, res, next) => {
         next();
       })
       .catch((error) => {
-        res.status(403).send(error);
+        res.status(403).send("error decoding token", error);
       });
   } else {
     res.status(403).send("token is required");
