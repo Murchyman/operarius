@@ -22,7 +22,7 @@ app.use((req, res, next) => {
         next();
       })
       .catch((error) => {
-        res.status(403).send("error decoding token", error);
+        res.status(403).send(error);
       });
   } else {
     res.status(403).send("token is required");

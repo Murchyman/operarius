@@ -1,4 +1,5 @@
 const express = require("express");
+const { app } = require("firebase-admin");
 const router = express.Router();
 const admin = require("firebase-admin");
 const { Configuration, OpenAIApi } = require("openai");
@@ -47,8 +48,6 @@ async function OpenAiQuery(ParsedBody) {
 
   console.log("responded text from openAI below");
   console.log(response.data.choices[0].text);
-  console.log("OpenAI Response output in full");
-  console.log(response);
 
   return {
     statusCode: 200,
@@ -57,6 +56,23 @@ async function OpenAiQuery(ParsedBody) {
 }
 
 const openai = new OpenAIApi(configuration);
+//check if the user is subscribed to the service
+router.use(async (req, res, next) => {
+  (await admin
+    .firestore()
+    .collection("users")
+    .doc(req.user.uid)
+    .get()
+    .then((doc) => {
+      return doc.data().subscriptionActive;
+    }))
+    ? next()
+    : res
+        .status(403)
+        .send(
+          "No active subscription found, if you think this is an error please contact us"
+        );
+});
 //openai query
 router.post("/", async (req, res) => {
   let ParsedBody = req.body.query;
